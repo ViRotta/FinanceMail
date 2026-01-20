@@ -8,7 +8,6 @@ async function requestJson(url, options = {}) {
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
-    // se não for JSON, mantém text como fallback
   }
 
   if (!resp.ok) {

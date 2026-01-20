@@ -1,4 +1,3 @@
-# app/main.py
 import logging
 
 from fastapi import FastAPI
@@ -86,12 +85,10 @@ class FeedbackEntrada(BaseModel):
 
 @app.on_event("startup")
 def aquecer_modelo():
-    # evita "primeira chamada lenta" em deploy
     try:
         carregar_modelo()
         logger.info("Modelo aquecido com sucesso.")
     except Exception:
-        # não derruba a API no boot, mas deixa rastreável
         logger.exception("Falha ao aquecer o modelo no startup.")
 
 
@@ -114,7 +111,6 @@ def status():
 def classificar_email(dados: EmailEntrada):
     texto_email = (dados.texto or "").strip()
 
-    # 1) Resultado do modelo local (já inclui as regras do rl_model.py)
     categoria_modelo, confianca_modelo = classificar_texto(texto_email)
 
     categoria_final = categoria_modelo
@@ -123,13 +119,10 @@ def classificar_email(dados: EmailEntrada):
     consultou_llama = False
     mudou_por_llama = False
 
-     # 2) regra "anti-erro feio": se for social e NÃO tiver indício financeiro, é improdutivo.
-    # Isso evita o LLaMA inventar "produtivo" em mensagens tipo "Feliz natal".
     if tem_indicio_social(texto_email) and not tem_indicio_financeiro(texto_email):
         categoria_final = "improdutivo"
-        confianca_final = max(confianca_final, 0.80)  # aqui você pode ser mais confiante
+        confianca_final = max(confianca_final, 0.80)
     else:
-        # 3) segunda opinião do LLaMA só quando a confiança do modelo for baixa
         if confianca_modelo < 0.65:
             consultou_llama = True
             try:
@@ -137,16 +130,13 @@ def classificar_email(dados: EmailEntrada):
                 categoria_llama = normalizar_categoria(
                     categoria_llama_raw, padrao=categoria_modelo
                 )
-
-                # não deixa o LLaMA contradizer regra de indício financeiro
-                # (se tem indício financeiro forte, não deixa virar improdutivo)
                 if tem_indicio_financeiro(texto_email) and categoria_llama == "improdutivo":
                     categoria_llama = categoria_modelo
 
                 if categoria_llama != categoria_modelo:
                     mudou_por_llama = True
                     categoria_final = categoria_llama
-                    confianca_final = 0.65  # conservador, não inventa super confiança
+                    confianca_final = 0.65
 
             except Exception:
                 logger.exception("Falha ao consultar LLaMA para validação de categoria.")
@@ -154,7 +144,6 @@ def classificar_email(dados: EmailEntrada):
                 mudou_por_llama = False
  
 
-    # 4) Geração de resposta (com fallback)
     try:
         resposta = gerar_resposta_com_llama(texto_email, categoria_final)
     except Exception:
@@ -171,7 +160,7 @@ def classificar_email(dados: EmailEntrada):
                 "Obrigado pela mensagem.\n\n"
                 "Atenciosamente."
             )
-    # Fonte mais honesta/auditável
+
     if mudou_por_llama:
         fonte = "llama"
     elif consultou_llama:

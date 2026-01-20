@@ -1,244 +1,137 @@
-# FinanceMail — Classificador de E-mails (MVP)
+# 📧 FinanceMail — Classificação Inteligente de E-mails Financeiros
 
-O **FinanceMail** é um MVP que classifica e-mails automaticamente como **produtivo** (demanda financeira/documental) ou **improdutivo** (social/conversa), calcula **confiança**, sugere uma **resposta pronta** e coleta **feedback** do usuário para evoluir o modelo.
+O **FinanceMail** é um MVP de **classificação automática de e-mails**, desenvolvido para reduzir ruído operacional e acelerar fluxos financeiros.  
+O sistema identifica se uma mensagem é **produtiva** (demanda financeira real) ou **improdutiva** (mensagens sociais ou de alinhamento), calcula um **nível de confiança** e sugere uma **resposta adequada**.
 
-> **Objetivo:** reduzir ruído em caixas de entrada e acelerar a triagem de mensagens ligadas a **pagamento, boleto, DANFE, nota fiscal, vencimento, valor, PIX**, etc.
-
----
-
-## ✨ Funcionalidades
-
-- **Classificação**: `produtivo` vs `improdutivo`
-- **Confiança**: score numérico + nível (baixa / média / alta)
-- **Resposta sugerida** (gerada por LLM)
-- **Feedback do usuário** gravado em arquivo `.jsonl`
-- **Histórico local (últimos 10)** no navegador (`localStorage`)
-- **UI simples e “demo-ready”** (React + Vite)
+O projeto foi desenvolvido como **produto funcional**, com frontend e backend em produção, arquitetura clara e decisões técnicas orientadas a desempenho, previsibilidade e evolução.
 
 ---
 
-## 🧠 Como funciona (arquitetura)
+## 🎯 Contexto e Motivação
 
-Frontend (React + Vite)
-└── chama /api/*
-(proxy do Vite evita CORS em dev)
-↓
-Backend (FastAPI)
-├── Modelo local (TF-IDF + Logistic Regression)
-│ └── categoria + confiança
-├── (opcional) LLM como “segunda opinião”
-│ └── usado apenas quando a confiança é baixa
-├── LLM gera a resposta sugerida
-└── Feedback → grava em feedback/feedback.jsonl
+Em ambientes administrativos e financeiros, uma parcela significativa do tempo é consumida na leitura e triagem de e-mails que não exigem ação imediata.  
+Essa dor foi observada em um contexto real, onde o setor financeiro precisava constantemente separar mensagens relevantes de comunicações informais.
 
+O FinanceMail surge para:
 
+- Reduzir o tempo gasto com triagem manual  
+- Priorizar e-mails que exigem ação financeira  
+- Padronizar respostas iniciais  
+- Criar base para automação e métricas futuras  
 
 ---
 
-## 🧰 Stack
+## 🧠 Visão Geral da Solução
 
-### Backend
-- FastAPI
-- scikit-learn (TF-IDF + Logistic Regression)
-- joblib (artefatos do modelo)
-- HuggingFace Hub (`InferenceClient`) para LLM
-- python-dotenv
+Dado o conteúdo de um e-mail, o sistema retorna:
 
-### Frontend
-- React + Vite
-- Fetch API
-- localStorage
+- **Categoria**: produtivo ou improdutivo  
+- **Nível de confiança** da classificação  
+- **Resposta sugerida**, adequada ao contexto  
+- **Feedback do usuário**, permitindo correção  
+
+As últimas classificações ficam salvas localmente no navegador, facilitando acompanhamento e validação.
 
 ---
 
-## 📁 Estrutura do projeto
+## 🏗️ Arquitetura Geral
 
+```mermaid
+flowchart LR
+    U[Usuário] --> FE[Frontend<br/>React + Vite]
+    FE -->|POST /classificar| API[Backend<br/>FastAPI]
 
-FinanceMail/
-├── backend/
-│ ├── app/
-│ │ ├── main.py
-│ │ ├── rl_model.py
-│ │ ├── ai_client.py
-│ │ ├── feedback_store.py
-│ │ ├── text_rules.py
-│ │ └── sample_training_data.py
-│ ├── requirements.txt
-│ ├── feedback/
-│ │ └── feedback.jsonl # gerado em runtime
-│ └── artifacts/ # modelos e pipeline
-└── frontend/
-├── src/
-│ ├── App.jsx
-│ ├── api.js
-│ └── ...
-└── vite.config.js
-
-
-
+    API --> FE
+    FE --> LS[(localStorage<br/>Histórico)]
+```
 
 ---
 
-## ▶️ Rodando localmente
+## ⚙️ Arquitetura Detalhada (Backend)
 
-### 1) Backend (FastAPI)
+```mermaid
+flowchart TD
+    API[FastAPI<br/>Endpoint /classificar]
+
+    API --> P[Pré-processamento<br/>normalização + limpeza]
+
+    P --> ML[ML Classifier<br/>TF-IDF + Regressão Logística]
+    P --> H[Heurísticas<br/>keywords + regex]
+
+    ML --> D{Confiança baixa?}
+    H --> D
+
+    D -- sim --> LLM[LLM<br/>LLaMA 3 8B Instruct]
+    D -- não --> R[Resposta sugerida]
+
+    LLM --> R
+
+    API --> FB[(feedback.jsonl)]
+```
+
+---
+
+## 🧪 Estratégia de Classificação
+
+A decisão final é construída a partir de três camadas:
+
+### 1. Modelo Supervisionado
+- TF-IDF + Regressão Logística  
+- Execução rápida, determinística e interpretável  
+
+### 2. Camada Heurística
+- Normalização de texto  
+- Palavras-chave financeiras  
+- Expressões regulares para valores, datas e documentos  
+
+### 3. IA Generativa
+- Ativada em casos de baixa confiança  
+- Responsável pela geração da resposta sugerida  
+
+---
+
+## 💬 Feedback e Aprendizado
+
+O usuário pode corrigir a classificação quando necessário.  
+O feedback é persistido em `feedback.jsonl`, permitindo análise e retreinamento futuro.
+
+---
+
+## 🧰 Stack Tecnológica
+
+**Frontend:** React, Vite, JavaScript  
+**Backend:** Python, FastAPI, Pydantic, Scikit-learn  
+**IA:** TF-IDF, Regressão Logística, LLaMA 3 8B Instruct  
+**Infra:** Render (Static Site + Web Service)
+
+---
+
+## 🚀 Execução Local
 
 ```bash
 cd backend
-
-python -m venv .venv
-source .venv/bin/activate
-
 pip install -r requirements.txt
+uvicorn main:app --reload
+```
 
-# Crie o .env com o token do HuggingFace (necessário para o LLM)
-echo "HF_TOKEN=SEU_TOKEN_AQUI" > .env
-
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-
----
-
-Backend
-
-Health: http://127.0.0.1:8000/status
-
-Swagger: http://127.0.0.1:8000/docs
-
-2) Frontend (React + Vite)
-cd ../frontend
+```bash
+cd frontend
 npm install
 npm run dev
-
-
-Frontend
-
-http://localhost:5173
-
-Em desenvolvimento, o frontend chama o backend via proxy:
-/api → http://127.0.0.1:8000 (sem problemas de CORS).
-
-🔑 Variáveis de ambiente
-Backend (backend/.env)
-
-HF_TOKEN — token do HuggingFace para chamar o LLM
-(geração de resposta e/ou segunda opinião conforme regra do backend)
-
-Frontend (opcional)
-
-VITE_API_BASE — por padrão o app usa "/api"
-
-🔌 API (principais endpoints)
-POST /classificar
-
-Classifica um texto de e-mail e devolve categoria, confiança e resposta sugerida.
-
-Request
-
-{
-  "texto": "Segue boleto e DANFE para pagamento. Valor 430, vencimento 20/01."
-}
-
-
-Response (exemplo)
-
-{
-  "categoria": "produtivo",
-  "confianca": 0.65,
-  "fonte": "modelo",
-  "resposta": "Prezado(a), ...",
-  "categoria_modelo": "produtivo",
-  "confianca_modelo": 0.65
-}
-
-POST /feedback
-
-Grava um feedback do usuário para uso futuro.
-
-Request
-
-{
-  "texto": "Teste UI",
-  "previsto": "produtivo",
-  "correto": "improdutivo"
-}
-
-
-Response
-
-{ "ok": true }
-
-
-Arquivo gerado
-
-backend/feedback/feedback.jsonl
-
-🧪 Teste rápido (curl)
-curl -X POST "http://127.0.0.1:8000/classificar" \
-  -H "Content-Type: application/json" \
-  -d '{"texto":"Feliz natal! Obrigado pelo atendimento :)"}'
-
-curl -X POST "http://127.0.0.1:8000/feedback" \
-  -H "Content-Type: application/json" \
-  -d '{"texto":"Teste UI","previsto":"produtivo","correto":"improdutivo"}'
-
-📌 Decisões de produto (MVP)
-
-Modelo local faz a classificação (rápido e barato)
-
-LLM é usado para:
-
-gerar a resposta sugerida
-
-atuar como “validação” apenas quando faz sentido (regra no backend)
-
-Feedback é salvo em .jsonl para evolução e retreino posterior
-
-⚠️ Limitações (atuais)
-
-Dataset inicial é pequeno → casos ambíguos podem errar
-
-Feedback ainda não está automatizado em um pipeline de retreino
-
-Não processa anexos (PDF/DANFE) — apenas texto (por enquanto)
-
-🛣️ Roadmap (próximos passos)
-
-Retreino periódico usando feedback.jsonl
-
-Dashboard de métricas (acurácia, matriz de confusão, drift)
-
-Upload de PDF/anexo e extração de texto
-
-Regras melhores para reduzir falsos positivos
-
-Deploy público (backend + frontend)
-
-🚀 Deploy (visão geral)
-Backend (Render — Web Service)
-
-Variável de ambiente: HF_TOKEN
-
-Start command:
-
-uvicorn app.main:app --host 0.0.0.0 --port 10000
-
-Frontend (Vercel ou Render — Static Site)
-
-Build:
-
-npm run build
-
-
-Output: dist
-
-📄 Licença
-
-Projeto de demonstração / MVP.
-
+```
 
 ---
 
-Se quiser, no próximo passo eu posso:
-- adicionar **seção “Impacto / Resultados” (estilo recrutador)**  
-- escrever o **roteiro do vídeo de apresentação (3–5 minutos)**  
-- ou adaptar o README para **vaga de trainee/júnior** com linguagem estratégica para RH e tech lead.
+## 🛣️ Roadmap
+
+- Retreinamento automático com feedback  
+- Upload de PDFs (boletos e notas fiscais)  
+- Dashboard de métricas  
+- Integração com e-mail real  
+
+---
+
+## 👩‍💻 Autora
+
+**Vitória Oliveira Rotta**  
+Engenharia da Computação  

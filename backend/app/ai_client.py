@@ -1,4 +1,3 @@
-# app/ai_client.py
 import os
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
@@ -24,7 +23,6 @@ def _normalizar_resposta_categoria(texto: str) -> str:
     if "improdutivo" in saida:
         return "improdutivo"
 
-    # se responder só "produtivo"
     if "produtivo" in saida:
         return "produtivo"
 

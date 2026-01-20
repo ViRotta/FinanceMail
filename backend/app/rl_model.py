@@ -13,7 +13,6 @@ from sklearn.pipeline import Pipeline
 from app.sample_training_data import TREINO_EMAILS
 from app.text_rules import tem_indicio_financeiro
 
-# Pasta/arquivos de saída (fácil de entender)
 PASTA_ARTIFACTS = Path("artifacts")
 ARQ_PIPELINE = PASTA_ARTIFACTS / "pipeline.joblib"
 ARQ_METRICAS = PASTA_ARTIFACTS / "metrics.json"
@@ -64,7 +63,6 @@ def treinar_modelo() -> Pipeline:
 
     pipeline.fit(x_treino, y_treino)
 
-    # Avaliação mínima (salva em JSON pra mostrar maturidade)
     pred_teste = pipeline.predict(x_teste)
 
     relatorio = classification_report(y_teste, pred_teste, output_dict=True, zero_division=0)
