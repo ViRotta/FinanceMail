@@ -47,7 +47,6 @@ def normalizar_categoria(valor: str, categoria_padrao: str) -> str:
 
 
 
-
 class EmailEntrada(BaseModel):
     texto: str
 
