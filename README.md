@@ -36,38 +36,22 @@ As últimas classificações ficam salvas localmente no navegador, facilitando a
 
 ## 🏗️ Arquitetura Geral
 
-```mermaid
-flowchart LR
-    U[Usuário] --> FE[Frontend<br/>React + Vite]
-    FE -->|POST /classificar| API[Backend<br/>FastAPI]
+A solução segue um modelo cliente-servidor, com frontend desacoplado e backend responsável pela classificação e geração de respostas.  
+O histórico de decisões fica armazenado localmente no navegador para facilitar acompanhamento.
 
-    API --> FE
-    FE --> LS[(localStorage<br/>Histórico)]
-```
+![Arquitetura Geral](docs/architecture/arquitetura-geral.png)
 
 ---
 
 ## ⚙️ Arquitetura Detalhada (Backend)
 
-```mermaid
-flowchart TD
-    API[FastAPI<br/>Endpoint /classificar]
+## ⚙️ Arquitetura Detalhada (Backend)
 
-    API --> P[Pré-processamento<br/>normalização + limpeza]
+O backend adota uma arquitetura híbrida, combinando machine learning supervisionado, heurísticas linguísticas e IA generativa como camada de apoio.
 
-    P --> ML[ML Classifier<br/>TF-IDF + Regressão Logística]
-    P --> H[Heurísticas<br/>keywords + regex]
-
-    ML --> D{Confiança baixa?}
-    H --> D
-
-    D -- sim --> LLM[LLM<br/>LLaMA 3 8B Instruct]
-    D -- não --> R[Resposta sugerida]
-
-    LLM --> R
-
-    API --> FB[(feedback.jsonl)]
-```
+![Arquitetura Detalhada do Backend](docs/architecture/arquitetura-backend.png)
+A decisão final de classificação é construída a partir da combinação do modelo supervisionado e das heurísticas.
+A IA generativa é acionada apenas em cenários de baixa confiança, evitando dependência excessiva de LLMs e mantendo previsibilidade, performance e controle do fluxo de decisão.
 
 ---
 
