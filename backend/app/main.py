@@ -2,6 +2,8 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import os
 from pydantic import BaseModel, field_validator
 
 from app.rl_model import classificar_texto, carregar_modelo
@@ -14,6 +16,23 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="FinanceMail")
 
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "").strip()
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+if frontend_origin:
+    origins.append(frontend_origin)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --------- util simples ----------
 def normalizar_categoria(valor: str, categoria_padrao: str) -> str:
