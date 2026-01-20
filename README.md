@@ -50,6 +50,7 @@ O histórico de decisões fica armazenado localmente no navegador para facilitar
 O backend adota uma arquitetura híbrida, combinando machine learning supervisionado, heurísticas linguísticas e IA generativa como camada de apoio.
 
 ![Arquitetura Detalhada do Backend](docs/architecture/arquitetura-backend.png)
+
 A decisão final de classificação é construída a partir da combinação do modelo supervisionado e das heurísticas.
 A IA generativa é acionada apenas em cenários de baixa confiança, evitando dependência excessiva de LLMs e mantendo previsibilidade, performance e controle do fluxo de decisão.
 
