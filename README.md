@@ -43,7 +43,6 @@ O histórico de decisões fica armazenado localmente no navegador para facilitar
 
 ---
 
-## ⚙️ Arquitetura Detalhada (Backend)
 
 ## ⚙️ Arquitetura Detalhada (Backend)
 
