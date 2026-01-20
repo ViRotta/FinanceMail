@@ -16,14 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="FinanceMail")
 
-frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "").strip()
 
-origins = [
-    "http://localhost:5173",
-    frontend_origin,
-]
-
-
+origins = ["http://localhost:5173"]
 if frontend_origin:
     origins.append(frontend_origin)
 
@@ -35,14 +30,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --------- util simples ----------
-def normalizar_categoria(valor: str, categoria_padrao: str) -> str:
-    """
-    Normaliza a saída do LLaMA para 'produtivo' ou 'improdutivo'.
-    Se vier algo inesperado, devolve categoria_padrao (mais seguro).
 
-    Obs: ordem importa para evitar casos como "improdutivo" cair em "produtivo".
-    """
+def normalizar_categoria(valor: str, categoria_padrao: str) -> str:
 
     texto = (valor or "").strip().lower()
 
@@ -59,7 +48,7 @@ def normalizar_categoria(valor: str, categoria_padrao: str) -> str:
 
 
 
-# --------- models ----------
+
 class EmailEntrada(BaseModel):
     texto: str
 
@@ -94,7 +83,7 @@ class FeedbackEntrada(BaseModel):
         return v
 
 
-# --------- startup ----------
+
 @app.on_event("startup")
 def aquecer_modelo():
     # evita "primeira chamada lenta" em deploy
@@ -106,7 +95,7 @@ def aquecer_modelo():
         logger.exception("Falha ao aquecer o modelo no startup.")
 
 
-# --------- rotas ----------
+
 @app.get("/")
 def home():
     return {
