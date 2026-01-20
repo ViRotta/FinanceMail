@@ -16,12 +16,13 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="FinanceMail")
 
-frontend_origin = os.getenv("FRONTEND_ORIGIN", "").strip()
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    frontend_origin,
 ]
+
 
 if frontend_origin:
     origins.append(frontend_origin)
